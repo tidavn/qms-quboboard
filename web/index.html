@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuboBoard — Useful-work marketplace on QMS Testnet</title>
+<style>
+  :root { color-scheme: dark; --bg:#070812; --card:#12142a; --line:#262a4d; --ink:#f4f5fb; --muted:#9aa0c3; --accent:#7dd3fc; --good:#4ade80; --bad:#f87171; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header, main, footer { max-width:920px; margin:0 auto; padding:0 16px; }
+  header { padding:28px 16px 8px; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  h2 { margin:28px 0 10px; font-size:20px; }
+  .sub { color:var(--muted); max-width:640px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin:12px 0; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  button { background:var(--accent); color:#04121f; border:0; border-radius:8px; padding:9px 14px; font-weight:700; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  input, textarea, select { width:100%; background:#0b0d20; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:9px 10px; font:inherit; }
+  label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+  .pill { display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .pill.open { color:var(--good); border-color:var(--good); }
+  .pill.done { color:var(--accent); border-color:var(--accent); }
+  .pill.dead { color:var(--bad); border-color:var(--bad); }
+  .mono { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; word-break:break-all; }
+  .muted { color:var(--muted); font-size:14px; }
+  a { color:var(--accent); }
+  #status { min-height:1.4em; margin:8px 0; }
+  .job h3 { margin:0 0 4px; }
+  .sol { border-top:1px solid var(--line); padding:8px 0; font-size:14px; }
+  .hidden { display:none; }
+  footer { padding:24px 16px 40px; color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>QuboBoard</h1>
+  <p class="sub">A useful-work marketplace on QMS Testnet. Clients post QUBO optimization
+  jobs with a reward escrowed in QMS; solvers submit solution hashes with their
+  objective value (lower is better); the client accepts one solution and the
+  reward is paid on-chain. Built for the QMS Builder Program, Cohort 1.</p>
+  <div class="row">
+    <button id="connectBtn">Connect wallet</button>
+    <button id="addChainBtn" class="ghost">Add QMS Testnet</button>
+    <span id="account" class="mono muted"></span>
+  </div>
+  <p id="status" class="muted"></p>
+  <p class="muted">Contract: <span id="contractAddr" class="mono"></span>
+    · <a id="contractLink" href="#" target="_blank" rel="noopener">Explorer</a>
+    · <a id="faucetLink" href="#" target="_blank" rel="noopener">Faucet (test QMS)</a></p>
+  <p id="notDeployed" class="card hidden">⚠️ No contract address is configured yet
+    (see <span class="mono">web/config.js</span>). The app is read-only until the
+    contract is deployed and its address is set.</p>
+</header>
+
+<main>
+  <h2>Post a job</h2>
+  <div class="card">
+    <label>Title <input id="jobTitle" placeholder="e.g. Minimize 64-var QUBO, sparse graph"></label>
+    <label>Details URI / CID (full QUBO instance + rules)
+      <input id="jobDetails" placeholder="ipfs://… or https://…"></label>
+    <div class="grid">
+      <div><label>Reward (QMS) <input id="jobReward" type="number" min="0" step="any" placeholder="1"></label></div>
+      <div><label>Deadline (days from now) <input id="jobDays" type="number" min="1" step="1" value="7"></label></div>
+    </div>
+    <p><button id="postBtn">Post job (escrows the reward)</button></p>
+    <p class="muted">The reward is held by the contract until you accept a solution, or refunded in full if you cancel.</p>
+  </div>
+
+  <h2>Jobs <span id="jobCount" class="pill"></span></h2>
+  <div class="row">
+    <button id="refreshBtn" class="ghost">Refresh</button>
+    <span class="muted">Newest first. Solutions are ordered by submission time; compare objective values yourself before accepting.</span>
+  </div>
+  <div id="jobs"></div>
+
+  <h2>Submit a solution</h2>
+  <div class="card">
+    <div class="grid">
+      <div><label>Job ID <input id="solJobId" type="number" min="0" step="1" placeholder="0"></label></div>
+      <div><label>Objective value (lower is better) <input id="solObjective" type="number" step="any" placeholder="-1234"></label></div>
+    </div>
+    <label>Assignment text (your full solution, e.g. the binary vector)
+      <textarea id="solText" rows="3" placeholder="0100110…"></textarea></label>
+    <p class="muted">The app hashes your assignment with keccak256 and stores only the hash
+      + objective on-chain, so your solution stays private until you choose to reveal it.</p>
+    <p><button id="submitSolBtn">Submit solution</button></p>
+  </div>
+</main>
+
+<footer>
+  QuboBoard · QMS Testnet (chain 19480) · No token, no custody beyond the per-job escrow in the contract.
+  Source: <a href="https://github.com/tidavn/qms-quboboard" target="_blank" rel="noopener">github.com/tidavn/qms-quboboard</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
