@@ -36,8 +36,8 @@ with the QMS team on request.
 ## Step 2 — Your project
 
 - **Project name*:** QuboBoard
-- **Website* (https://):** https://github.com/tidavn/qms-quboboard
-  (repo; replace with the demo URL once the frontend is hosted)
+- **Website* (https://):** https://tidavn.github.io/qms-quboboard/
+  (live demo; repo: https://github.com/tidavn/qms-quboboard)
 - **One-line description* (max 140):**
   A marketplace for useful work on QMS: post QUBO jobs with escrowed rewards,
   solvers submit solutions and get paid on-chain.
@@ -84,7 +84,7 @@ measurement link and the plan in the README):**
 **COMMUNITY (up to 3 public channels)**
 - **Channel 1 URL* (max 120 incl. https://):**
   https://x.com/d94zETH
-- **Followers / members*:** [TO FILL BY NGUYEN — số follower X của bạn]
+- **Followers / members*:** 630
 
 **FUNDING (optional — can be left blank)**
 - Funding status: Not raised
